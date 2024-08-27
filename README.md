@@ -1,2 +1,0 @@
-# rediscopy
-redis copy
