@@ -15,12 +15,6 @@ static void msg(const char *msg) {
     fprintf(stderr, "%s\n", msg);
 }
 
-static void die(const char *msg) {
-    int err = errno;
-    fprintf(stderr, "[%d] %s\n", err, msg);
-    abort();
-}
-
 const size_t k_max_msg = 4096;
 
 static int32_t one_request(int connfd) {
