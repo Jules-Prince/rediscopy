@@ -1,99 +1,51 @@
-#
-# 'make'        build executable file 'main'
-# 'make clean'  removes all .o and executable files
-#
+# 'make' builds both server and client executables
+# 'make clean' removes all executables and the output directory
+# 'make run_server' runs the server
+# 'make run_client' runs the client
 
-# define the Cpp compiler to use
+# Compiler
 CXX = g++
 
-# define any compile-time flags
-CXXFLAGS	:= -std=c++17 -Wall -Wextra -g
+# Compiler flags
+CXXFLAGS := -Wall -Wextra -O2 -g
 
-# define library paths in addition to /usr/lib
-#   if I wanted to include libraries not in /usr/lib I'd specify
-#   their path using -Lpath, something like:
-LFLAGS =
+# Source files
+SERVER_SRC := src/server.cpp
+CLIENT_SRC := src/client.cpp
 
-# define output directory
-OUTPUT	:= output
+# Output directory
+OUTPUT_DIR := output
 
-# define source directory
-SRC		:= src
+# Executables
+SERVER := $(OUTPUT_DIR)/server
+CLIENT := $(OUTPUT_DIR)/client
 
-# define include directory
-INCLUDE	:= include
+# Default target
+all: $(OUTPUT_DIR) $(SERVER) $(CLIENT)
 
-# define lib directory
-LIB		:= lib
+# Create output directory
+$(OUTPUT_DIR):
+	mkdir -p $(OUTPUT_DIR)
 
-ifeq ($(OS),Windows_NT)
-MAIN	:= main.exe
-SOURCEDIRS	:= $(SRC)
-INCLUDEDIRS	:= $(INCLUDE)
-LIBDIRS		:= $(LIB)
-FIXPATH = $(subst /,\,$1)
-RM			:= del /q /f
-MD	:= mkdir
-else
-MAIN	:= main
-SOURCEDIRS	:= $(shell find $(SRC) -type d)
-INCLUDEDIRS	:= $(shell find $(INCLUDE) -type d)
-LIBDIRS		:= $(shell find $(LIB) -type d)
-FIXPATH = $1
-RM = rm -f
-MD	:= mkdir -p
-endif
+# Build server
+$(SERVER): $(SERVER_SRC)
+	$(CXX) $(CXXFLAGS) $(SERVER_SRC) -o $(SERVER)
 
-# define any directories containing header files other than /usr/include
-INCLUDES	:= $(patsubst %,-I%, $(INCLUDEDIRS:%/=%))
+# Build client
+$(CLIENT): $(CLIENT_SRC)
+	$(CXX) $(CXXFLAGS) $(CLIENT_SRC) -o $(CLIENT)
 
-# define the C libs
-LIBS		:= $(patsubst %,-L%, $(LIBDIRS:%/=%))
-
-# define the C source files
-SOURCES		:= $(wildcard $(patsubst %,%/*.cpp, $(SOURCEDIRS)))
-
-# define the C object files
-OBJECTS		:= $(SOURCES:.cpp=.o)
-
-# define the dependency output files
-DEPS		:= $(OBJECTS:.o=.d)
-
-#
-# The following part of the makefile is generic; it can be used to
-# build any executable just by changing the definitions above and by
-# deleting dependencies appended to the file from 'make depend'
-#
-
-OUTPUTMAIN	:= $(call FIXPATH,$(OUTPUT)/$(MAIN))
-
-all: $(OUTPUT) $(MAIN)
-	@echo Executing 'all' complete!
-
-$(OUTPUT):
-	$(MD) $(OUTPUT)
-
-$(MAIN): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LIBS)
-
-# include all .d files
--include $(DEPS)
-
-# this is a suffix replacement rule for building .o's and .d's from .c's
-# it uses automatic variables $<: the name of the prerequisite of
-# the rule(a .c file) and $@: the name of the target of the rule (a .o file)
-# -MMD generates dependency output files same name as the .o file
-# (see the gnu make manual section about automatic variables)
-.cpp.o:
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -MMD $<  -o $@
-
+# Clean up
 .PHONY: clean
 clean:
-	$(RM) $(OUTPUTMAIN)
-	$(RM) $(call FIXPATH,$(OBJECTS))
-	$(RM) $(call FIXPATH,$(DEPS))
-	@echo Cleanup complete!
+	rm -rf $(OUTPUT_DIR)
 
-run: all
-	./$(OUTPUTMAIN)
-	@echo Executing 'run: all' complete!
+# Run server
+.PHONY: run_server
+run_server: $(SERVER)
+	$(SERVER)
+
+# Run client
+.PHONY: run_client
+run_client: $(CLIENT)
+	$(CLIENT)
